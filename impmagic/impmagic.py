@@ -1,6 +1,7 @@
 import __main__
 import inspect
 import sys
+import os
 
 if 'imp_cache' not in __main__.__dict__:
     __main__.__dict__['imp_cache'] = {}
@@ -127,13 +128,15 @@ def reload(modulename):
 
 #Chargement d'un module sans l'importer dans le code
 def get(modulename):
-    if 'imp_cache' in __main__.__dict__:
-        if modulename in CACHE:
-            return CACHE[modulename]
+    funct = None
+
+    cache_mod = None
+    if modulename in sys.modules:
+        cache_mod = sys.modules[modulename]
+        del sys.modules[modulename]
 
     try:
         funct = __import__(modulename, fromlist=['object'])
-        return funct
     except:
         try:
             if "." in modulename:
@@ -141,10 +144,49 @@ def get(modulename):
                 funct = __import__(".".join(modulename[:-1]), fromlist=['object'])
 
                 funct = getattr(funct, modulename[-1])
-                return funct
         except:
-            return None
-    return None
+            pass
+    finally:
+        if cache_mod:
+            sys.modules[modulename] = cache_mod
+        return funct
+
+
+#Chargement d'un module à partir d'un fichier spécifique sans l'importer dans le code
+def get_from_file(filepath):
+    # Le nom du module est le nom du fichier sans l'extension .py
+    modulename = os.path.splitext(os.path.basename(filepath))[0]
+
+    cache_mod = None
+    if modulename in sys.modules:
+        cache_mod = sys.modules[modulename]
+        del sys.modules[modulename]
+
+    # Sauvegarde du sys.path original
+    original_sys_path = sys.path.copy()
+
+    # Détermine le répertoire contenant le fichier
+    module_dir = os.path.dirname(filepath)
+    # Ajoute ce répertoire au sys.path
+    sys.path.insert(0, module_dir)
+
+    try:
+    
+        # Importer le module
+        module = __import__(modulename)
+        
+        # Retourner le module importé
+        return module
+    except Exception as e:
+        print(f"Error loading module {modulename} from {filepath}: {e}")
+        return None
+    finally:
+        # Restaurer le sys.path original
+        sys.path = original_sys_path
+
+        if cache_mod:
+            sys.modules[modulename] = cache_mod
+
 
 #Décorateur pour l'importation de module
 def loader(*data):

@@ -62,3 +62,11 @@ Il est possible d'utiliser un module sans avoir besoin de l'importer grâce à la 
 module = impmagic.get('os')
 module.mkdir(dir)
 ```
+<br>
+
+### Utiliser un module sans l'importer depuis un fichier
+Il est possible d'utiliser un module sans avoir besoin de l'importer grâce à la méthode get.
+```python
+module = impmagic.get_from_file('os.py')
+module.mkdir(dir)
+```

@@ -2,6 +2,7 @@ import __main__
 import inspect
 import sys
 import os
+import functools
 
 if 'imp_cache' not in __main__.__dict__:
     __main__.__dict__['imp_cache'] = {}
@@ -124,7 +125,7 @@ def reload(modulename):
     unload(modulename, uncache=True)
     current_frame = inspect.currentframe()
     calling_frame = current_frame.f_back
-    load(modulename, globals = calling_frame.f_globals)
+    load(modulename, globals_val = calling_frame.f_globals)
 
 #Chargement d'un module sans l'importer dans le code
 def get(modulename):
@@ -191,8 +192,10 @@ def get_from_file(filepath):
 #Décorateur pour l'importation de module
 def loader(*data):
     def inner(func):
+        @functools.wraps(func)  # Conserve les métadonnées de la fonction originale
         def wrapper(*args, **kwargs):
-            load(data, func)
-            return func(*args, **kwargs)
+            load(data, func)  # Appelle la fonction load avec les données et la fonction cible
+            result = func(*args, **kwargs)  # Exécute la fonction originale
+            return result  # Retourne directement le résultat sans modification
         return wrapper
-    return inner 
+    return inner
